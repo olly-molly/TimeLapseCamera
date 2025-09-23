@@ -39,6 +39,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import org.woheller69.freeDroidWarn.FreeDroidWarn;
+
 import at.andreasrohner.spartantimelapserec.data.RecSettings;
 import at.andreasrohner.spartantimelapserec.sensor.MuteShutter;
 
@@ -88,6 +90,7 @@ public class MainActivity extends AppCompatActivity implements ForegroundService
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		SettingsCommon.setDefaultValues(context, prefs);
 		startActivity(new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:"+getPackageName())));
+		FreeDroidWarn.showWarningOnUpgrade(this, BuildConfig.VERSION_CODE);
 		if (GithubStar.shouldShowStarDialog(this)) GithubStar.starDialog(this,"https://github.com/woheller69/timelapsecamera");
 	}
 
