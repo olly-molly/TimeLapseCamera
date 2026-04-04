@@ -37,11 +37,14 @@ import android.os.SystemClock;
 import android.util.Log;
 
 import at.andreasrohner.spartantimelapserec.data.RecSettings;
+import at.andreasrohner.spartantimelapserec.rest.LogBuffer;
 
 public class ImageRecorder extends Recorder implements Runnable,
 		Camera.PictureCallback, ErrorCallback, AutoFocusCallback {
 	private static final int CONTINUOUS_CAPTURE_THRESHOLD = 3000;
 	private static final int RELEASE_CAMERA_THRESHOLD = 2000;
+	private static final int MAX_RETRIES = 10;
+	private int mRetryCount = 0;
 	protected long mEndTime;
 	protected long mStartPreviewTime;
 	protected boolean mUseAutoFocus;
@@ -99,6 +102,10 @@ public class ImageRecorder extends Recorder implements Runnable,
 	}
 
 	protected void scheduleNextPicture() {
+		if (mHandler == null) {
+			return;
+		}
+
 		long diffTime = SystemClock.elapsedRealtime() - mStartPreviewTime;
 		long delay = mSettings.getCaptureRate() - diffTime;
 		if (delay >= RELEASE_CAMERA_THRESHOLD && mSettings.getCaptureRate() >= CONTINUOUS_CAPTURE_THRESHOLD){
@@ -121,9 +128,22 @@ public class ImageRecorder extends Recorder implements Runnable,
 			out.close();
 			mWaitCamReady = false;
 			recordedImagesCount++;
+			mRetryCount = 0;
 			scheduleNextPicture();
 		} catch (Exception e) {
-			handleError(getClass().getSimpleName(), e.getMessage());
+			Log.e(getClass().getSimpleName(), "Error saving picture: " + e.getMessage());
+			LogBuffer.add("E", getClass().getSimpleName(), "Error saving picture: " + e.getMessage());
+			if (mRetryCount < MAX_RETRIES) {
+				mRetryCount++;
+				Log.w(getClass().getSimpleName(), "Retry attempt " + mRetryCount + "/" + MAX_RETRIES);
+				LogBuffer.add("W", getClass().getSimpleName(), "Retry attempt " + mRetryCount + "/" + MAX_RETRIES);
+				if (mHandler != null) {
+					mHandler.postDelayed(this, 1000);
+				}
+			} else {
+				mRetryCount = 0;
+				handleError(getClass().getSimpleName(), e.getMessage());
+			}
 		}
 	}
 
@@ -132,14 +152,25 @@ public class ImageRecorder extends Recorder implements Runnable,
 		try {
 			muteShutter();
 			new Handler(Looper.getMainLooper()).postDelayed(() -> {
-				if (mCamera!=null) {
+				if (mCamera!=null && mHandler != null) {
 					camera.takePicture(null, null, pictureCallback);
 				}
 			}, mWaitCamReady ? mSettings.getCameraTriggerDelay() : 0);
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			handleError(getClass().getSimpleName(), e.getMessage());
+			LogBuffer.add("E", getClass().getSimpleName(), "AutoFocus error: " + e.getMessage());
+			if (mRetryCount < MAX_RETRIES) {
+				mRetryCount++;
+				Log.w(getClass().getSimpleName(), "AutoFocus retry " + mRetryCount + "/" + MAX_RETRIES);
+				LogBuffer.add("W", getClass().getSimpleName(), "AutoFocus retry " + mRetryCount + "/" + MAX_RETRIES);
+				if (mHandler != null) {
+					mHandler.postDelayed(this, 1000);
+				}
+			} else {
+				mRetryCount = 0;
+				handleError(getClass().getSimpleName(), e.getMessage());
+			}
 		}
 	}
 
@@ -173,7 +204,19 @@ public class ImageRecorder extends Recorder implements Runnable,
 		} catch (Exception e) {
 			Log.e("Error","startPreview");
 			e.printStackTrace();
-			handleError(getClass().getSimpleName(), e.getMessage());
+			LogBuffer.add("E", getClass().getSimpleName(), "Run error: " + e.getMessage());
+			if (mRetryCount < MAX_RETRIES) {
+				mRetryCount++;
+				Log.w(getClass().getSimpleName(), "Run retry " + mRetryCount + "/" + MAX_RETRIES);
+				LogBuffer.add("W", getClass().getSimpleName(), "Run retry " + mRetryCount + "/" + MAX_RETRIES);
+				releaseCamera();
+				if (mHandler != null) {
+					mHandler.postDelayed(this, 2000);
+				}
+			} else {
+				mRetryCount = 0;
+				handleError(getClass().getSimpleName(), e.getMessage());
+			}
 		}
 	}
 
@@ -255,11 +298,36 @@ public class ImageRecorder extends Recorder implements Runnable,
 	public void onError(int error, Camera camera) {
 		switch (error) {
 		case Camera.CAMERA_ERROR_SERVER_DIED:
-			handleError(getClass().getSimpleName(), "Cameraserver died");
+			Log.w(getClass().getSimpleName(), "Camera server died, retrying...");
+			LogBuffer.add("W", getClass().getSimpleName(), "Camera server died, retrying...");
+			if (mRetryCount < MAX_RETRIES) {
+				mRetryCount++;
+				Log.w(getClass().getSimpleName(), "Camera retry " + mRetryCount + "/" + MAX_RETRIES);
+				LogBuffer.add("W", getClass().getSimpleName(), "Camera retry " + mRetryCount + "/" + MAX_RETRIES);
+				releaseCamera();
+				if (mHandler != null) {
+					mHandler.postDelayed(this, 2000);
+				}
+			} else {
+				mRetryCount = 0;
+				handleError(getClass().getSimpleName(), "Camera server died");
+			}
 			break;
 		default:
-			handleError(getClass().getSimpleName(),
-					"Unkown error occured while recording");
+			Log.w(getClass().getSimpleName(), "Unknown camera error: " + error);
+			LogBuffer.add("W", getClass().getSimpleName(), "Unknown camera error: " + error);
+			if (mRetryCount < MAX_RETRIES) {
+				mRetryCount++;
+				Log.w(getClass().getSimpleName(), "Camera retry " + mRetryCount + "/" + MAX_RETRIES);
+				LogBuffer.add("W", getClass().getSimpleName(), "Camera retry " + mRetryCount + "/" + MAX_RETRIES);
+				releaseCamera();
+				if (mHandler != null) {
+					mHandler.postDelayed(this, 2000);
+				}
+			} else {
+				mRetryCount = 0;
+				handleError(getClass().getSimpleName(), "Unknown error occurred while recording");
+			}
 			break;
 		}
 	}

@@ -32,6 +32,7 @@ import android.os.PowerManager.WakeLock;
 import android.text.format.DateFormat;
 import android.util.Log;
 import at.andreasrohner.spartantimelapserec.data.RecSettings;
+import at.andreasrohner.spartantimelapserec.rest.LogBuffer;
 import at.andreasrohner.spartantimelapserec.sensor.MuteShutter;
 import at.andreasrohner.spartantimelapserec.sensor.OrientationSensor;
 
@@ -78,6 +79,8 @@ public abstract class Recorder {
 	public Recorder(RecSettings settings, 			Context context, Handler handler) {
 		mContext = context;
 
+		LogBuffer.init();
+
 		mOrientation = new OrientationSensor(context);
 		mOrientation.enable();
 
@@ -116,6 +119,7 @@ public abstract class Recorder {
 	}
 
 	protected void handleError(String tag, String msg) {
+		LogBuffer.add("E", tag, msg);
 		if (mHandler != null) {
 			Message m = new Message();
 			Bundle b = new Bundle();
@@ -125,7 +129,6 @@ public abstract class Recorder {
 			m.setData(b);
 			m.setTarget(mHandler);
 			mHandler.sendMessage(m);
-			mHandler = null;
 		}
 	}
 

@@ -27,6 +27,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import at.andreasrohner.spartantimelapserec.BuildConfig;
+import at.andreasrohner.spartantimelapserec.rest.LogBuffer;
 import at.andreasrohner.spartantimelapserec.ForegroundService;
 import at.andreasrohner.spartantimelapserec.R;
 import at.andreasrohner.spartantimelapserec.ServiceHelper;
@@ -395,6 +396,8 @@ public class HttpThread extends Thread implements HttpOutput, Closeable {
 			}
 
 			result = b.toString();
+		} else if ("log".equals(command)) {
+			result = LogBuffer.getAll();
 		}
 
 		if (result != null) {
