@@ -70,6 +70,8 @@
     <string name="pref_camera_trigger_delay">Kamera çekim gecikmesi</string>
     <string name="action_about">Hakkında</string>
     <string name="pref_flash">Varsa flaş kullan</string>
+    <string name="pref_fixed_rotation">Görüntü Döndürme</string>
+    <string name="pref_fixed_rotation_summ">Görüntü döndürmeyi sabit bir açıya kilitle</string>
     <string name="pref_video_enc_summ">En yüksek hız için 0 olarak ayarlayın (öntanımlı). Gerçek bit hızı, kod çözücünün gerektirdiği en düşük kaliteden etkilenebilir.</string>
     <string name="format_bps">%s bit/sn</string>
     <string name="encode_best">En iyi kalite</string>

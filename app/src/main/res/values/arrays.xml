@@ -11,4 +11,19 @@
         <item>IMAGE_TIME_LAPSE</item>
     </string-array>
 
+    <string-array name="pref_fixed_rotation_entries">
+        <item>Auto</item>
+        <item>0° (Normal)</item>
+        <item>90° (Landscape)</item>
+        <item>180°</item>
+        <item>270°</item>
+    </string-array>
+    <string-array name="pref_fixed_rotation_values">
+        <item>-1</item>
+        <item>0</item>
+        <item>90</item>
+        <item>180</item>
+        <item>270</item>
+    </string-array>
+
 </resources>

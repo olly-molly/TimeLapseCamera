@@ -74,6 +74,15 @@
             android:key="pref_flash"
             android:title="@string/pref_flash"/>
 
+        <ListPreference
+            android:defaultValue="-1"
+            android:dialogTitle="@string/pref_fixed_rotation"
+            android:entries="@array/pref_fixed_rotation_entries"
+            android:entryValues="@array/pref_fixed_rotation_values"
+            android:key="pref_fixed_rotation"
+            android:summary="@string/pref_fixed_rotation_summ"
+            android:title="@string/pref_fixed_rotation" />
+
         <SwitchPreference
             android:defaultValue="false"
             android:key="pref_mute_shutter"

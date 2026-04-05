@@ -51,4 +51,19 @@ public class OrientationSensor extends OrientationEventListener {
 
 		return rotation;
 	}
+
+	public int getCameraRotationFixed(int cameraId, int fixedRotation) {
+		if (fixedRotation < 0) {
+			return getCameraRotation(cameraId);
+		}
+		
+		Camera.CameraInfo info = new Camera.CameraInfo();
+		Camera.getCameraInfo(cameraId, info);
+		
+		if (info.facing == CameraInfo.CAMERA_FACING_FRONT) {
+			return (info.orientation - fixedRotation + 360) % 360;
+		} else {
+			return (fixedRotation - info.orientation + 360) % 360;
+		}
+	}
 }

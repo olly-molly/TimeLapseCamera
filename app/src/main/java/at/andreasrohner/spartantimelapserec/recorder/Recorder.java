@@ -225,6 +225,9 @@ public abstract class Recorder {
 	}
 
 	protected int getCameraRotation(int cameraId) {
+		if (mSettings.getFixedRotation() >= 0) {
+			return mOrientation.getCameraRotationFixed(cameraId, mSettings.getFixedRotation());
+		}
 		if (mOrientation != null)
 			return mOrientation.getCameraRotation(cameraId);
 		return 0;
