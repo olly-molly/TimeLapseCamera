@@ -116,6 +116,9 @@ public class HttpThread extends Thread implements HttpOutput, Closeable {
 				Log.e(TAG, "Invalid Request: «" + request + "»");
 			}
 			String url = request.substring(pos + 1, pos2);
+
+			url = url.replaceAll("/+", "/");
+
 			String protocol = request.substring(pos2);
 
 			Log.d(TAG, "Request: «" + method + "» «" + url + "» «" + protocol + "»");
