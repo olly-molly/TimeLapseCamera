@@ -28,9 +28,11 @@ import android.content.SharedPreferences;
 import android.hardware.Camera;
 import android.hardware.Camera.Size;
 import android.media.CamcorderProfile;
+import android.util.Log;
 
 public class CameraSettings {
 
+	private static final String TAG = CameraSettings.class.getSimpleName();
 	private Camera.Parameters[] cameraParams;
 
 	private synchronized Camera.Parameters getCameraParameters(int camId) {
@@ -39,10 +41,15 @@ public class CameraSettings {
 
 		Camera.Parameters params = cameraParams[camId];
 		if (params == null) {
-			Camera camera = Camera.open(camId);
-			params = camera.getParameters();
-			camera.release();
-			cameraParams[camId] = params;
+			try {
+				Camera camera = Camera.open(camId);
+				params = camera.getParameters();
+				camera.release();
+				cameraParams[camId] = params;
+			} catch (RuntimeException e) {
+				Log.w(TAG, "Camera " + camId + " is busy or unavailable: " + e.getMessage());
+				return null;
+			}
 		}
 
 		return params;
@@ -95,6 +102,9 @@ public class CameraSettings {
 
 	private List<Integer> getFrameRatesFromCamera(int camId) {
 		Camera.Parameters params = getCameraParameters(camId);
+
+		if (params == null)
+			return getFrameRatesFromCameraProfile(camId);
 
 		List<int[]> ranges = params.getSupportedPreviewFpsRange();
 		List<Integer> fpsList = new ArrayList<Integer>();
@@ -238,6 +248,9 @@ public class CameraSettings {
 		if (sizes == null) {
 			Camera.Parameters params = getCameraParameters(camId);
 
+			if (params == null)
+				return getFrameSizesFromProfiles(camId, timeLapse);
+
 			List<Camera.Size> suppSizes = params.getSupportedVideoSizes();
 			if (suppSizes == null)
 				return getFrameSizesFromProfiles(camId, timeLapse);
@@ -274,6 +287,9 @@ public class CameraSettings {
 		if (sizes == null) {
 			Camera.Parameters params = getCameraParameters(camId);
 
+			if (params == null)
+				return sizesList;
+
 			sizes = new TreeSet<String>();
 			for (Size s : params.getSupportedPictureSizes()) {
 				sizes.add(s.width + "x" + s.height);
@@ -300,16 +316,22 @@ public class CameraSettings {
 
 	public int getMinExposureCompensation(int camId){
 		Camera.Parameters params = getCameraParameters(camId);
+		if (params == null)
+			return 0;
 		return params.getMinExposureCompensation();
 	}
 
 	public int getMaxExposureCompensation(int camId){
 		Camera.Parameters params = getCameraParameters(camId);
+		if (params == null)
+			return 0;
 		return params.getMaxExposureCompensation();
 	}
 
 	public int getMaxZoom(int camId){
 		Camera.Parameters params = getCameraParameters(camId);
+		if (params == null)
+			return 0;
 		if (params.isZoomSupported())
 			return params.getMaxZoom();
 		else
