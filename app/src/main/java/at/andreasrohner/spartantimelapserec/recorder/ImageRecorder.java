@@ -191,12 +191,22 @@ public class ImageRecorder extends Recorder implements Runnable,
 
 			new Handler(Looper.getMainLooper()).postDelayed(() -> {
 				if (mCamera!=null) {
-					mCamera.startPreview();
-					if (mUseAutoFocus) {
-						mCamera.autoFocus(autoFocusCallback);
-					}
-					else {
-						onAutoFocus(true, mCamera);
+					try {
+						mCamera.startPreview();
+						if (mUseAutoFocus) {
+							mCamera.autoFocus(autoFocusCallback);
+						}
+						else {
+							onAutoFocus(true, mCamera);
+						}
+					} catch (RuntimeException e) {
+						Log.e("ImageRecorder", "startPreview failed: " + e.getMessage());
+						LogBuffer.add("E", getClass().getSimpleName(), "startPreview failed: " + e.getMessage());
+						releaseCamera();
+						mCamera = null;
+						if (mHandler != null) {
+							mHandler.postDelayed(this, 2000);
+						}
 					}
 				}
 			}, mWaitCamReady ? mSettings.getCameraInitDelay() : 0);
