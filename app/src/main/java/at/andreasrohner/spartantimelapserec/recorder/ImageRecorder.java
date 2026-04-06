@@ -43,8 +43,10 @@ public class ImageRecorder extends Recorder implements Runnable,
 		Camera.PictureCallback, ErrorCallback, AutoFocusCallback {
 	private static final int CONTINUOUS_CAPTURE_THRESHOLD = 3000;
 	private static final int RELEASE_CAMERA_THRESHOLD = 2000;
-	private static final int MAX_RETRIES = 10;
+	private static final int MAX_RETRIES = 3;
+	private static final int MAX_RECOVERY_ATTEMPTS = 3;
 	private int mRetryCount = 0;
+	private int mRecoveryCount = 0;
 	protected long mEndTime;
 	protected long mStartPreviewTime;
 	protected boolean mUseAutoFocus;
@@ -129,20 +131,21 @@ public class ImageRecorder extends Recorder implements Runnable,
 			mWaitCamReady = false;
 			recordedImagesCount++;
 			mRetryCount = 0;
+			mRecoveryCount = 0;
 			scheduleNextPicture();
 		} catch (Exception e) {
 			Log.e(getClass().getSimpleName(), "Error saving picture: " + e.getMessage());
 			LogBuffer.add("E", getClass().getSimpleName(), "Error saving picture: " + e.getMessage());
 			if (mRetryCount < MAX_RETRIES) {
 				mRetryCount++;
-				Log.w(getClass().getSimpleName(), "Retry attempt " + mRetryCount + "/" + MAX_RETRIES);
-				LogBuffer.add("W", getClass().getSimpleName(), "Retry attempt " + mRetryCount + "/" + MAX_RETRIES);
+				Log.w(getClass().getSimpleName(), "Retry " + mRetryCount + "/" + MAX_RETRIES);
+				LogBuffer.add("W", getClass().getSimpleName(), "Retry " + mRetryCount + "/" + MAX_RETRIES);
 				if (mHandler != null) {
 					mHandler.postDelayed(this, 1000);
 				}
 			} else {
 				mRetryCount = 0;
-				handleError(getClass().getSimpleName(), e.getMessage());
+				attemptRecovery();
 			}
 		}
 	}
@@ -169,7 +172,7 @@ public class ImageRecorder extends Recorder implements Runnable,
 				}
 			} else {
 				mRetryCount = 0;
-				handleError(getClass().getSimpleName(), e.getMessage());
+				attemptRecovery();
 			}
 		}
 	}
@@ -204,8 +207,16 @@ public class ImageRecorder extends Recorder implements Runnable,
 						LogBuffer.add("E", getClass().getSimpleName(), "startPreview failed: " + e.getMessage());
 						releaseCamera();
 						mCamera = null;
-						if (mHandler != null) {
-							mHandler.postDelayed(this, 2000);
+						if (mRetryCount < MAX_RETRIES) {
+							mRetryCount++;
+							Log.w(getClass().getSimpleName(), "startPreview retry " + mRetryCount + "/" + MAX_RETRIES);
+							LogBuffer.add("W", getClass().getSimpleName(), "startPreview retry " + mRetryCount + "/" + MAX_RETRIES);
+							if (mHandler != null) {
+								mHandler.postDelayed(this, 2000);
+							}
+						} else {
+							mRetryCount = 0;
+							attemptRecovery();
 						}
 					}
 				}
@@ -225,7 +236,7 @@ public class ImageRecorder extends Recorder implements Runnable,
 				}
 			} else {
 				mRetryCount = 0;
-				handleError(getClass().getSimpleName(), e.getMessage());
+				attemptRecovery();
 			}
 		}
 	}
@@ -320,7 +331,7 @@ public class ImageRecorder extends Recorder implements Runnable,
 				}
 			} else {
 				mRetryCount = 0;
-				handleError(getClass().getSimpleName(), "Camera server died");
+				attemptRecovery();
 			}
 			break;
 		default:
@@ -336,9 +347,44 @@ public class ImageRecorder extends Recorder implements Runnable,
 				}
 			} else {
 				mRetryCount = 0;
-				handleError(getClass().getSimpleName(), "Unknown error occurred while recording");
+				attemptRecovery();
 			}
 			break;
+		}
+	}
+
+	private void attemptRecovery() {
+		if (mRecoveryCount >= MAX_RECOVERY_ATTEMPTS) {
+			LogBuffer.add("E", getClass().getSimpleName(), 
+				"Recovery failed after " + MAX_RECOVERY_ATTEMPTS + " attempts - stopping");
+			mRecoveryCount = 0;
+			handleError(getClass().getSimpleName(), "Recovery failed");
+			return;
+		}
+		
+		mRecoveryCount++;
+		mRetryCount = 0;
+		
+		LogBuffer.add("W", getClass().getSimpleName(), 
+			"Recovery " + mRecoveryCount + "/" + MAX_RECOVERY_ATTEMPTS);
+		
+		releaseCamera();
+		mCamera = null;
+		
+		if (mHandler != null) {
+			mHandler.postDelayed(() -> {
+				try {
+					prepareRecord();
+					LogBuffer.add("I", getClass().getSimpleName(), 
+						"Recovery " + mRecoveryCount + " successful");
+					mRecoveryCount = 0;
+					scheduleNextPicture();
+				} catch (Exception e) {
+					LogBuffer.add("E", getClass().getSimpleName(), 
+						"Recovery " + mRecoveryCount + " failed: " + e.getMessage());
+					scheduleNextPicture();
+				}
+			}, 3000);
 		}
 	}
 }
