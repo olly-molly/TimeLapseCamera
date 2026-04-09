@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Set;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
@@ -122,6 +124,17 @@ public class ImageRecorder extends Recorder implements Runnable,
 
 	@Override
 	public void onPictureTaken(byte[] data, Camera camera) {
+		// Check brightness before saving
+		if (mSettings.getMinBrightness() > 0) {
+			int brightness = analyzeBrightness(data);
+			if (brightness < mSettings.getMinBrightness()) {
+				LogBuffer.add("W", getClass().getSimpleName(), 
+					"Skipped dark image: " + brightness + "% (min: " + mSettings.getMinBrightness() + "%)");
+				scheduleNextPicture();
+				return;
+			}
+		}
+		
 		try {
 			File file = getOutputFile("jpg");
 			currentRecordedImage = file;
@@ -148,6 +161,30 @@ public class ImageRecorder extends Recorder implements Runnable,
 				attemptRecovery();
 			}
 		}
+	}
+	
+	private int analyzeBrightness(byte[] data) {
+		BitmapFactory.Options opts = new BitmapFactory.Options();
+		opts.inSampleSize = 8;
+		Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length, opts);
+		
+		int totalBrightness = 0;
+		int[] pixels = new int[bitmap.getWidth() * bitmap.getHeight()];
+		bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0, 
+			bitmap.getWidth(), bitmap.getHeight());
+		
+		for (int pixel : pixels) {
+			int r = (pixel >> 16) & 0xFF;
+			int g = (pixel >> 8) & 0xFF;
+			int b = pixel & 0xFF;
+			totalBrightness += (int)(0.299 * r + 0.587 * g + 0.114 * b);
+		}
+		
+		int avgBrightness = totalBrightness / pixels.length;
+		int percentage = (avgBrightness * 100) / 255;
+		
+		bitmap.recycle();
+		return percentage;
 	}
 
 	@Override

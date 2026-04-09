@@ -83,6 +83,15 @@
             android:summary="@string/pref_fixed_rotation_summ"
             android:title="@string/pref_fixed_rotation" />
 
+        <at.andreasrohner.spartantimelapserec.preference.SeekBarPreference
+            android:defaultValue="0"
+            android:dialogMessage="@string/pref_min_brightness_summ"
+            android:key="pref_min_brightness"
+            app:min="0"
+            app:max="100"
+            app:suffix="%"
+            android:title="@string/pref_min_brightness" />
+
         <SwitchPreference
             android:defaultValue="false"
             android:key="pref_mute_shutter"

@@ -72,6 +72,8 @@
     <string name="pref_flash">Use Flash if available</string>
     <string name="pref_fixed_rotation">Image Rotation</string>
     <string name="pref_fixed_rotation_summ">Lock image rotation to a fixed angle</string>
+    <string name="pref_min_brightness">Minimum Brightness</string>
+    <string name="pref_min_brightness_summ">Skip images darker than this (0 = disabled)</string>
     <string name="pref_video_enc_summ">Set 0 for maximum rate (default). The actual bitrate may be affected by the minimum quality required by the codec.</string>
     <string name="format_bps">%s bit/s</string>
     <string name="encode_best">Best quality</string>

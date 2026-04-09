@@ -52,6 +52,7 @@ public class RecSettings {
 	private boolean cameraFlash;
 	private int videoEncodingBitRate;
 	private int fixedRotation;
+	private int minBrightness;
 
 	public static int getInteger(SharedPreferences prefs, String key, int def) {
 		try {
@@ -158,6 +159,7 @@ public class RecSettings {
 		cameraTriggerDelay = prefs.getInt("pref_camera_trigger_delay", 1000);
 		cameraFlash = prefs.getBoolean("pref_flash",false);
 		fixedRotation = getInteger(prefs, "pref_fixed_rotation", -1);
+		minBrightness = prefs.getInt("pref_min_brightness", 0);
 		// negative value disables the limit
 		if (stopRecAfter >= 47 * 60)
 			stopRecAfter = -1;
@@ -347,4 +349,6 @@ public class RecSettings {
 	public int getVideoEncodingBitRate() {return  videoEncodingBitRate;}
 
 	public int getFixedRotation() {return fixedRotation;}
+
+	public int getMinBrightness() {return minBrightness;}
 }
