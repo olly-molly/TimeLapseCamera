@@ -79,8 +79,6 @@ public abstract class Recorder {
 	public Recorder(RecSettings settings, 			Context context, Handler handler) {
 		mContext = context;
 
-		LogBuffer.init();
-
 		mOrientation = new OrientationSensor(context);
 		mOrientation.enable();
 
