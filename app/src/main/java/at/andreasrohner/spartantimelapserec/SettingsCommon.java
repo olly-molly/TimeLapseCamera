@@ -394,6 +394,10 @@ public class SettingsCommon implements OnSharedPreferenceChangeListener, SeekBar
 			startStopRestApiServer();
 		} else if (key.equals("pref_restapi_port")) {
 			prefIpInformation.updateData();
+		} else if (key.equals("pref_use_tap_focus")) {
+			if (!prefs.getBoolean("pref_use_tap_focus", false)) {
+				prefs.edit().putInt("pref_focus_x", 0).putInt("pref_focus_y", 0).apply();
+			}
 		}
 
 		updatePrefStatus(prefs);

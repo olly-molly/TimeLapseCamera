@@ -8,6 +8,7 @@ GET /1/ctrl/start: Start recording
 GET /1/ctrl/stop: Stop recording
 GET /1/ctrl/param: Get parameter
 GET /1/ctrl/log: Get application log (last 500 entries)
+GET /1/ctrl/focus/clear: Clear tap-to-focus point
 GET /1/device/battery: Get battery percentage
 GET /1/current/img: Current / last recorded image
 GET /1/current/imgcount: Image count

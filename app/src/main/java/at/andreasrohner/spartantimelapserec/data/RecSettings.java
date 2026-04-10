@@ -53,6 +53,9 @@ public class RecSettings {
 	private int videoEncodingBitRate;
 	private int fixedRotation;
 	private int minBrightness;
+	private boolean useTapFocus;
+	private int focusX;
+	private int focusY;
 
 	public static int getInteger(SharedPreferences prefs, String key, int def) {
 		try {
@@ -160,6 +163,9 @@ public class RecSettings {
 		cameraFlash = prefs.getBoolean("pref_flash",false);
 		fixedRotation = getInteger(prefs, "pref_fixed_rotation", -1);
 		minBrightness = prefs.getInt("pref_min_brightness", 0);
+		useTapFocus = prefs.getBoolean("pref_use_tap_focus", false);
+		focusX = prefs.getInt("pref_focus_x", 0);
+		focusY = prefs.getInt("pref_focus_y", 0);
 		// negative value disables the limit
 		if (stopRecAfter >= 47 * 60)
 			stopRecAfter = -1;
@@ -351,4 +357,13 @@ public class RecSettings {
 	public int getFixedRotation() {return fixedRotation;}
 
 	public int getMinBrightness() {return minBrightness;}
+
+	public boolean useTapFocus() {return useTapFocus;}
+	public int getFocusX() {return focusX;}
+	public int getFocusY() {return focusY;}
+	public void setFocusPoint(int x, int y, SharedPreferences prefs) {
+		focusX = x;
+		focusY = y;
+		prefs.edit().putInt("pref_focus_x", x).putInt("pref_focus_y", y).apply();
+	}
 }

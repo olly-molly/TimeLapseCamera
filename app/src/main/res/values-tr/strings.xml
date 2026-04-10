@@ -74,6 +74,8 @@
     <string name="pref_fixed_rotation_summ">Görüntü döndürmeyi sabit bir açıya kilitle</string>
     <string name="pref_min_brightness">Minimum Parlaklık</string>
     <string name="pref_min_brightness_summ">Bundan daha koyu görüntüleri atla (0 = devre dışı)</string>
+    <string name="pref_use_tap_focus">Dokunarak Odakla</string>
+    <string name="pref_use_tap_focus_summ">Önizleme ekranına dokunarak çekimler için odak noktası ayarla</string>
     <string name="pref_video_enc_summ">En yüksek hız için 0 olarak ayarlayın (öntanımlı). Gerçek bit hızı, kod çözücünün gerektirdiği en düşük kaliteden etkilenebilir.</string>
     <string name="format_bps">%s bit/sn</string>
     <string name="encode_best">En iyi kalite</string>

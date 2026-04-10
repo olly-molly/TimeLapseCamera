@@ -21,6 +21,7 @@ package at.andreasrohner.spartantimelapserec.recorder;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -286,6 +287,20 @@ public class ImageRecorder extends Recorder implements Runnable,
 	}
 
 	protected void setFocusMode(Camera.Parameters params, Set<String> suppModes) {
+		// Check for tap-to-focus first
+		if (mSettings.useTapFocus() && (mSettings.getFocusX() != 0 || mSettings.getFocusY() != 0)) {
+			android.graphics.Rect rect = new android.graphics.Rect(
+				mSettings.getFocusX() - 100, mSettings.getFocusY() - 100,
+				mSettings.getFocusX() + 100, mSettings.getFocusY() + 100);
+			Camera.Area area = new Camera.Area(rect, 1000);
+			List<Camera.Area> focusList = new ArrayList<>();
+			focusList.add(area);
+			params.setFocusAreas(focusList);
+			params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+			mUseAutoFocus = true;
+			return;
+		}
+
 		if (mSettings.getCaptureRate() < CONTINUOUS_CAPTURE_THRESHOLD && suppModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
 			params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
 		} else if (suppModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)

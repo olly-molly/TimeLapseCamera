@@ -94,6 +94,12 @@
 
         <SwitchPreference
             android:defaultValue="false"
+            android:key="pref_use_tap_focus"
+            android:summary="@string/pref_use_tap_focus_summ"
+            android:title="@string/pref_use_tap_focus" />
+
+        <SwitchPreference
+            android:defaultValue="false"
             android:key="pref_mute_shutter"
             android:summary="@string/pref_mute_shutter_summ"
             android:title="@string/pref_mute_shutter" />

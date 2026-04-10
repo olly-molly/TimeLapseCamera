@@ -401,6 +401,11 @@ public class HttpThread extends Thread implements HttpOutput, Closeable {
 			result = b.toString();
 		} else if ("log".equals(command)) {
 			result = LogBuffer.getAll();
+		} else if ("focus/clear".equals(command)) {
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(
+				restService.getApplicationContext());
+			prefs.edit().putInt("pref_focus_x", 0).putInt("pref_focus_y", 0).apply();
+			result = "ok";
 		}
 
 		if (result != null) {

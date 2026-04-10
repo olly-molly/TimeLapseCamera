@@ -19,12 +19,16 @@
 package at.andreasrohner.spartantimelapserec;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.List;
 import java.util.Set;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.hardware.Camera;
 import android.hardware.Camera.AutoFocusCallback;
 import android.hardware.Camera.CameraInfo;
@@ -33,6 +37,7 @@ import android.hardware.Camera.Size;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -49,6 +54,7 @@ public class PreviewActivity extends Activity implements ErrorCallback,
 	private Camera mCamera;
 	private RecSettings mSettings;
 	private boolean mUseAutoFocus;
+	private SharedPreferences mPrefs;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -60,13 +66,55 @@ public class PreviewActivity extends Activity implements ErrorCallback,
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
 		mSettings = new RecSettings();
-		mSettings.load(getApplicationContext(), PreferenceManager
-				.getDefaultSharedPreferences(getApplicationContext()));
+		mPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		mSettings.load(getApplicationContext(), mPrefs);
 
 		// Create a RelativeLayout container that will hold a SurfaceView,
 		// and set it as the content of our activity.
 		mPreview = new Preview(this, mSettings);
 		setContentView(mPreview);
+
+		// Tap-to-focus handler
+		mPreview.setOnTouchListener(new View.OnTouchListener() {
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				if (event.getAction() == MotionEvent.ACTION_UP && mSettings.useTapFocus()) {
+					if (mCamera == null) {
+						return true;
+					}
+
+					int x = (int) ((event.getX() / v.getWidth()) * 2000 - 1000);
+					int y = (int) ((event.getY() / v.getHeight()) * 2000 - 1000);
+
+					mSettings.setFocusPoint(x, y, mPrefs);
+
+					try {
+						Camera.Parameters params = mCamera.getParameters();
+
+						if (params.getSupportedFocusModes().contains(
+								Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
+							params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+							mCamera.setParameters(params);
+						}
+
+						android.graphics.Rect focusRect = new android.graphics.Rect(
+							x - 100, y - 100, x + 100, y + 100);
+						Camera.Area focusArea = new Camera.Area(focusRect, 1000);
+						List<Camera.Area> focusList = new ArrayList<>();
+						focusList.add(focusArea);
+						params.setFocusAreas(focusList);
+						params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+						mCamera.setParameters(params);
+						mCamera.autoFocus(PreviewActivity.this);
+
+						Toast.makeText(PreviewActivity.this, "Focus set", Toast.LENGTH_SHORT).show();
+					} catch (RuntimeException e) {
+						// Silent fail
+					}
+				}
+				return true;
+			}
+		});
 	}
 
 	private void releaseCamera() {
